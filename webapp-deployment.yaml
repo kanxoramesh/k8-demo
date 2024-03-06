@@ -1,0 +1,52 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  labels:
+    app: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: pokhrelramesh1996576/k8-demo-node:1.0.0 #image
+        ports:
+        - containerPort: 8080  
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              key: pg-user
+              name: postgres-secret   
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: pg-passowrd
+              name: postgres-secret
+        - name: DB_URL
+          valueFrom:
+            configMapKeyRef:
+              key: pg-url
+              name: postgres-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-service
+spec:
+  type: LoadBalancer #default CluterIP internal service type
+  selector:
+    app: webapp #should match above label name
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      #nodePort: 30100 #expose the service on each node's IP at a static port
